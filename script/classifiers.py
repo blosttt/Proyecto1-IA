@@ -28,8 +28,8 @@ class BayesianClassifier:
         self.cov_non_lesion = np.cov(X[y == 0].T)
         
         # Añadir pequeña constante para estabilidad numérica
-        self.cov_lesion += np.eye(3) * 1e-6
-        self.cov_non_lesion += np.eye(3) * 1e-6
+        self.cov_lesion += np.eye(self.cov_lesion.shape[0]) * 1e-6
+        self.cov_non_lesion += np.eye(self.cov_non_lesion.shape[0]) * 1e-6
         
     def likelihood_ratio(self, X):
         # Distribuciones normales multivariadas
@@ -132,6 +132,7 @@ def apply_kmeans_to_images(images, n_clusters=2):
     """
     Aplica K-Means a cada imagen individualmente
     """
+
     segmented_masks = []
     
     for img in images:

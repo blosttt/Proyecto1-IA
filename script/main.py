@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import load_dataset, split_dataset, extract_pixels_with_balance, plot_histograms
 from classifiers import BayesianClassifier, BayesianPCAClassifier, evaluate_classifier, plot_roc_curves, apply_kmeans_to_images
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import os
 
 def main():
