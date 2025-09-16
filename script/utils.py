@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from PIL import Image
 
 def load_dataset(data_path, img_size=(256, 256)):
 
@@ -120,3 +121,50 @@ def plot_histograms(X_train, y_train):
     print(f"  R: μ={np.mean(non_lesion_pixels[:, 0]):.2f}, σ={np.std(non_lesion_pixels[:, 0]):.2f}")
     print(f"  G: μ={np.mean(non_lesion_pixels[:, 1]):.2f}, σ={np.std(non_lesion_pixels[:, 1]):.2f}")
     print(f"  B: μ={np.mean(non_lesion_pixels[:, 2]):.2f}, σ={np.std(non_lesion_pixels[:, 2]):.2f}")
+
+def ensure_dir(path):
+    os.makedirs(path, exist_ok=True)
+
+def mask_to_uint8(mask):
+    """
+    Convierte una máscara a uint8 [0,255].
+    Acepta máscaras booleanas, 0/1, binarias en float o ya en uint8.
+    """
+    if mask.dtype == np.uint8:
+        return mask
+    # si es booleano
+    if mask.dtype == bool:
+        return (mask.astype(np.uint8) * 255)
+    # si tiene valores entre 0 y 1 (float)
+    if mask.max() <= 1.0:
+        return (mask * 255).astype(np.uint8)
+    # si tiene otros rangos, normalizamos a 0-255
+    m = mask.astype(np.float32)
+    m -= m.min()
+    if m.max() > 0:
+        m = m / m.max()
+    return (m * 255).astype(np.uint8)
+
+def save_masks_as_images(pred_masks, true_masks, output_dir, prefix="img"):
+    """
+    Guarda pares (pred, true) como PNG en output_dir.
+    pred_masks y true_masks: listas o iterables de arrays 2D (H,W) con valores 0/1 o 0-255.
+    """
+    ensure_dir(output_dir)
+    for idx, (pred, true) in enumerate(zip(pred_masks, true_masks)):
+        pred_arr = mask_to_uint8(np.array(pred))
+        true_arr = mask_to_uint8(np.array(true))
+
+        # Asegurar que son 2D
+        if pred_arr.ndim == 3 and pred_arr.shape[2] == 3:
+            im_pred = Image.fromarray(pred_arr)
+        else:
+            im_pred = Image.fromarray(pred_arr, mode="L")
+
+        if true_arr.ndim == 3 and true_arr.shape[2] == 3:
+            im_true = Image.fromarray(true_arr)
+        else:
+            im_true = Image.fromarray(true_arr, mode="L")
+
+        im_pred.save(os.path.join(output_dir, f"{prefix}_pred_{idx}.png"))
+        im_true.save(os.path.join(output_dir, f"{prefix}_true_{idx}.png"))
